@@ -13,8 +13,9 @@ export default function ThemeToggle() {
       aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
       className={` 
         group
-        transition-colors
         hover:bg-primary-800 active:bg-primary-700
+        cursor-pointer
+        transition-all duration-300 ease-in-out 
         ${isDark ? "text-white" : "text-black"}`}
       icon={
         isDark ? (

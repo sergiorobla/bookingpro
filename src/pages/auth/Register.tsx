@@ -1,8 +1,11 @@
+// src/pages/Register.tsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
+import NameInput from "@/components/ui/NameInput";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import { capitalizeWords } from "@/utils/CapitalizeWords";
 
 const Register = () => {
   const { isDark } = useTheme();
@@ -12,7 +15,7 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ nombre?: string; email?: string; password?: string; general?: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,8 +23,12 @@ const Register = () => {
     setError(null);
     setLoading(true);
 
+    // Formatear inputs
+    const formattedNombre = capitalizeWords(nombre.trim());
+    const formattedEmail = email.trim();
+
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden");
+      setError({ password: "Las contraseñas no coinciden" });
       setLoading(false);
       return;
     }
@@ -30,7 +37,7 @@ const Register = () => {
       const response = await fetch("http://localhost:8081/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, email, password }),
+        body: JSON.stringify({ nombre: formattedNombre, email: formattedEmail, password }),
       });
 
       if (!response.ok) {
@@ -41,7 +48,7 @@ const Register = () => {
       console.log("Registro exitoso");
       navigate("/login");
     } catch (err: any) {
-      setError(err.message || "Ocurrió un error inesperado");
+      setError({ general: err.message || "Ocurrió un error inesperado" });
     } finally {
       setLoading(false);
     }
@@ -59,12 +66,10 @@ const Register = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Input
-          label="Nombre completo"
-          type="text"
+        <NameInput
           value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          required
+          onChange={setNombre}
+          error={error?.nombre}
           autoComplete="name"
         />
 
@@ -72,7 +77,8 @@ const Register = () => {
           label="Correo electrónico"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value.trimStart())}
+          error={error?.email || undefined}
           required
           autoComplete="email"
         />
@@ -82,6 +88,7 @@ const Register = () => {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          error={error?.password}
           required
           autoComplete="new-password"
         />
@@ -91,11 +98,12 @@ const Register = () => {
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          error={error?.password}
           required
           autoComplete="new-password"
         />
 
-        {error && <p className="text-sm text-center text-red-500">{error}</p>}
+        {error?.general && <p className="text-sm text-center text-red-500">{error.general}</p>}
 
         <Button type="submit" fullWidth loading={loading}>
           {loading ? "Creando cuenta..." : "Crear cuenta"}
@@ -104,7 +112,7 @@ const Register = () => {
 
       <div className="text-center text-sm">
         ¿Ya tienes cuenta?{" "}
-        <Link to="/login" className="font-medium">
+        <Link to="/login" className="font-medium underline">
           Inicia sesión aquí
         </Link>
       </div>
